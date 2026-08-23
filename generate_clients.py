@@ -1,7 +1,10 @@
 import yaml
 import sys
 
-class BlankDumper(yaml.Dumper):
+SERVER_INTERNAL_PORT = 5678  # Puerto interno del servidor para la comunicación con los clientes.
+SERVER_EXTERNAL_PORT = 5678  # Puerto externo del servidor para exponerlo fuera del contenedor.
+
+class CustomDumper(yaml.Dumper):
     """Dumper de PyYAML con saltos extra para dejar el compose más legible."""
 
     def write_line_break(self, data=None):
@@ -12,7 +15,7 @@ class BlankDumper(yaml.Dumper):
 
     def increase_indent(self, flow=False, indentless=False):
         """Fuerza la indentación de secuencias en bloque para mantener el formato esperado."""
-        return super(BlankDumper, self).increase_indent(flow, indentless=False)
+        return super(CustomDumper, self).increase_indent(flow, indentless=False)
 
 def generar_compose(numero_clientes):
     """Genera docker-compose.yaml con un servidor y la cantidad indicada de clientes."""
@@ -28,8 +31,12 @@ def generar_compose(numero_clientes):
                 "environment": [
                     "PYTHONUNBUFFERED=1",
                     "SERVER_HOST=server",
-                    "SERVER_PORT=5678",
+                    f"SERVER_PORT={SERVER_INTERNAL_PORT}",
                 ],
+                "ports": [
+                    f"{SERVER_EXTERNAL_PORT}:{SERVER_INTERNAL_PORT}"
+                ],
+                "networks": ["gabynet"]
             },
         }
     }
@@ -44,12 +51,28 @@ def generar_compose(numero_clientes):
             "environment": [
                 f"AGENCY_ID={i}",
                 "SERVER_HOST=server",
-                "SERVER_PORT=5678",
+                f"SERVER_PORT={SERVER_INTERNAL_PORT}",
             ],
+            "networks": ["gabynet"]
         }
+    compose_data["networks"] = {
+        "gabynet": {
+            "driver": "bridge",
+            "name": "gabynet",
+            "internal": False,
+            "attachable": True,
+            "ipam": {
+                "config": [
+                    {
+                        "subnet": "172.11.0.0/16"
+                    }
+                ]
+            }
+        }
+    }
     
     with open("docker-compose.yaml", "w") as file:
-        yaml.dump(compose_data, file, Dumper=BlankDumper, default_flow_style=False, sort_keys=False)
+        yaml.dump(compose_data, file, Dumper=CustomDumper, default_flow_style=False, sort_keys=False)
         
     print(f"✅ Archivo docker-compose.yaml generado con éxito para {numero_clientes} cliente{('s' if numero_clientes > 1 else '')}.")
 

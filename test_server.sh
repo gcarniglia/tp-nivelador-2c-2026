@@ -1,0 +1,1 @@
+sudo docker run --rm --network gabynet alpine sh -c "echo 'Hola Mundo' | nc server 5678 -w 2"
