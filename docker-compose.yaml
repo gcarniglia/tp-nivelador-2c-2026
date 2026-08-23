@@ -9,6 +9,10 @@ services:
       - PYTHONUNBUFFERED=1
       - SERVER_HOST=server
       - SERVER_PORT=5678
+    ports:
+      - 5678:5678
+    networks:
+      - gabynet
 
   client_0:
     build:
@@ -21,6 +25,8 @@ services:
       - AGENCY_ID=0
       - SERVER_HOST=server
       - SERVER_PORT=5678
+    networks:
+      - gabynet
 
   client_1:
     build:
@@ -33,6 +39,8 @@ services:
       - AGENCY_ID=1
       - SERVER_HOST=server
       - SERVER_PORT=5678
+    networks:
+      - gabynet
 
   client_2:
     build:
@@ -45,6 +53,8 @@ services:
       - AGENCY_ID=2
       - SERVER_HOST=server
       - SERVER_PORT=5678
+    networks:
+      - gabynet
 
   client_3:
     build:
@@ -57,6 +67,8 @@ services:
       - AGENCY_ID=3
       - SERVER_HOST=server
       - SERVER_PORT=5678
+    networks:
+      - gabynet
 
   client_4:
     build:
@@ -69,3 +81,15 @@ services:
       - AGENCY_ID=4
       - SERVER_HOST=server
       - SERVER_PORT=5678
+    networks:
+      - gabynet
+networks:
+
+  gabynet:
+    driver: bridge
+    name: gabynet
+    internal: false
+    attachable: true
+    ipam:
+      config:
+        - subnet: 172.11.0.0/16
