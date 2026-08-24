@@ -1,5 +1,4 @@
 services:
-
   server:
     build:
       context: ./services/server
@@ -13,7 +12,6 @@ services:
       - 5678:5678
     networks:
       - gabynet
-
   client_0:
     build:
       context: ./services/client
@@ -25,9 +23,13 @@ services:
       - AGENCY_ID=0
       - SERVER_HOST=server
       - SERVER_PORT=5678
+      - INPUT_FILE=/var/opt/input/input-0.csv
+      - OUTPUT_FILE=/var/opt/output/output-0.csv
     networks:
       - gabynet
-
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
   client_1:
     build:
       context: ./services/client
@@ -39,9 +41,13 @@ services:
       - AGENCY_ID=1
       - SERVER_HOST=server
       - SERVER_PORT=5678
+      - INPUT_FILE=/var/opt/input/input-0.csv
+      - OUTPUT_FILE=/var/opt/output/output-0.csv
     networks:
       - gabynet
-
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
   client_2:
     build:
       context: ./services/client
@@ -53,9 +59,13 @@ services:
       - AGENCY_ID=2
       - SERVER_HOST=server
       - SERVER_PORT=5678
+      - INPUT_FILE=/var/opt/input/input-0.csv
+      - OUTPUT_FILE=/var/opt/output/output-0.csv
     networks:
       - gabynet
-
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
   client_3:
     build:
       context: ./services/client
@@ -67,9 +77,13 @@ services:
       - AGENCY_ID=3
       - SERVER_HOST=server
       - SERVER_PORT=5678
+      - INPUT_FILE=/var/opt/input/input-0.csv
+      - OUTPUT_FILE=/var/opt/output/output-0.csv
     networks:
       - gabynet
-
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
   client_4:
     build:
       context: ./services/client
@@ -81,10 +95,15 @@ services:
       - AGENCY_ID=4
       - SERVER_HOST=server
       - SERVER_PORT=5678
+      - INPUT_FILE=/var/opt/input/input-0.csv
+      - OUTPUT_FILE=/var/opt/output/output-0.csv
     networks:
       - gabynet
-networks:
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
 
+networks:
   gabynet:
     driver: bridge
     name: gabynet
