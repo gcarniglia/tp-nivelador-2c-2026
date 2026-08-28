@@ -5,8 +5,8 @@ SERVER_INTERNAL_PORT = 5678  # Puerto interno del servidor para la comunicación
 SERVER_EXTERNAL_PORT = 5678  # Puerto externo del servidor para exponerlo fuera del contenedor.
 INPUT_DIRECTORY = "/var/opt/input"
 OUTPUT_DIRECTORY = "/var/opt/output"
-INPUT_FILE = INPUT_DIRECTORY + "/input-0.csv"
-OUTPUT_FILE = OUTPUT_DIRECTORY + "/output-0.csv"
+INPUT_FILE = INPUT_DIRECTORY + "/input-*.csv"
+OUTPUT_FILE = OUTPUT_DIRECTORY + "/output-*.csv"
 
 class CustomDumper(yaml.Dumper):
     """Dumper de PyYAML con saltos extra para dejar el compose más legible."""
@@ -56,8 +56,8 @@ def generar_compose(numero_clientes):
                 f"AGENCY_ID={i}",
                 "SERVER_HOST=server",
                 f"SERVER_PORT={SERVER_INTERNAL_PORT}",
-                f"INPUT_FILE={INPUT_FILE}",
-                f"OUTPUT_FILE={OUTPUT_FILE}"
+                f"INPUT_FILE={INPUT_FILE.replace('*', str(i))}",
+                f"OUTPUT_FILE={OUTPUT_FILE.replace('*', str(i))}"
             ],
             "networks": ["gabynet"],
             "volumes": [
