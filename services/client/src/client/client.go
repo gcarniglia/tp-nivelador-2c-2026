@@ -16,11 +16,12 @@ const CONNECTION_ATTEMPS_DELAY_MS = 200
 const ECHO_CLIENT_BUFFER_SIZE = 512
 
 type ClientConfig struct {
-	ServerHost string
-	ServerPort string
-	AgencyId   string
-	InputFile  string
-	OutputFile string
+	ServerHost             string
+	ServerPort             string
+	AgencyId               string
+	InputFile              string
+	OutputFile             string
+	FileContainerDirectory string
 }
 
 type Client struct {
@@ -64,14 +65,14 @@ func (client *Client) Run() error {
 	const mainAction = "test-echo-server"
 	defer client.conn.Close()
 
-	outputFile, err := os.OpenFile(client.config.OutputFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	outputFile, err := os.OpenFile(client.config.FileContainerDirectory+client.config.OutputFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		logger.Error(mainAction, logger.Fail)
 		return err
 	}
 	defer outputFile.Close()
 
-	inputFile, err := os.Open(client.config.InputFile)
+	inputFile, err := os.Open(client.config.FileContainerDirectory + client.config.InputFile)
 
 	if err != nil {
 		logger.Error("open-input-file", logger.Fail)

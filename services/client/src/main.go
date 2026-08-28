@@ -33,12 +33,20 @@ func loadConfig() (client.ClientConfig, error) {
 	if outputFile == "" {
 		return client.ClientConfig{}, errors.New("OUTPUT_FILE environment variable is required")
 	}
+
+	fileContainerDirectory := os.Getenv("FILE_CONTAINER_DIRECTORY")
+
+	if fileContainerDirectory == "" {
+		return client.ClientConfig{}, errors.New("FILE_CONTAINER_DIRECTORY environment variable is required")
+	}
+
 	return client.ClientConfig{
-		ServerHost: serverHost,
-		ServerPort: serverPort,
-		AgencyId:   agencyId,
-		InputFile:  inputFile,
-		OutputFile: outputFile,
+		ServerHost:             serverHost,
+		ServerPort:             serverPort,
+		AgencyId:               agencyId,
+		InputFile:              inputFile,
+		OutputFile:             outputFile,
+		FileContainerDirectory: fileContainerDirectory,
 	}, nil
 }
 
