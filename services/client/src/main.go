@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 
-	client "github.com/7574-sistemas-distribuidos/tp-nivelador/src/client"
+	"github.com/7574-sistemas-distribuidos/tp-nivelador/src/client"
 	"github.com/7574-sistemas-distribuidos/tp-nivelador/src/logger"
 )
 
@@ -33,11 +33,12 @@ func loadConfig() (client.ClientConfig, error) {
 	if outputFile == "" {
 		return client.ClientConfig{}, errors.New("OUTPUT_FILE environment variable is required")
 	}
-
 	return client.ClientConfig{
 		ServerHost: serverHost,
 		ServerPort: serverPort,
 		AgencyId:   agencyId,
+		InputFile:  inputFile,
+		OutputFile: outputFile,
 	}, nil
 }
 
