@@ -3,6 +3,9 @@ import sys
 
 SERVER_INTERNAL_PORT = 5678  # Puerto interno del servidor para la comunicación con los clientes.
 SERVER_EXTERNAL_PORT = 5678  # Puerto externo del servidor para exponerlo fuera del contenedor.
+FILE_CONTAINER_DIRECTORY = "/var/opt"
+INPUT_FILE = "/input/input-*.csv"
+OUTPUT_FILE = "/output/output-*.csv"
 
 class CustomDumper(yaml.Dumper):
     """Dumper de PyYAML con saltos extra para dejar el compose más legible."""
@@ -10,7 +13,7 @@ class CustomDumper(yaml.Dumper):
     def write_line_break(self, data=None):
         '''Escribe un salto de línea y añade un salto extra si estamos en la sangría principal de los servicios.'''
         super().write_line_break(data)
-        if len(self.indents) == 2:  
+        if len(self.indents) == 1:
             super().write_line_break()
 
     def increase_indent(self, flow=False, indentless=False):
@@ -52,8 +55,15 @@ def generar_compose(numero_clientes):
                 f"AGENCY_ID={i}",
                 "SERVER_HOST=server",
                 f"SERVER_PORT={SERVER_INTERNAL_PORT}",
+                f"FILE_CONTAINER_DIRECTORY={FILE_CONTAINER_DIRECTORY}",
+                f"INPUT_FILE={INPUT_FILE.replace('*', str(i))}",
+                f"OUTPUT_FILE={OUTPUT_FILE.replace('*', str(i))}"
             ],
-            "networks": ["gabynet"]
+            "networks": ["gabynet"],
+            "volumes": [
+                f"./input:{FILE_CONTAINER_DIRECTORY}/input:ro",
+                f"./output:{FILE_CONTAINER_DIRECTORY}/output:rw"
+            ] 
         }
     compose_data["networks"] = {
         "gabynet": {

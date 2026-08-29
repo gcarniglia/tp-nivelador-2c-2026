@@ -1,5 +1,4 @@
 services:
-
   server:
     build:
       context: ./services/server
@@ -13,7 +12,6 @@ services:
       - 5678:5678
     networks:
       - gabynet
-
   client_0:
     build:
       context: ./services/client
@@ -25,9 +23,14 @@ services:
       - AGENCY_ID=0
       - SERVER_HOST=server
       - SERVER_PORT=5678
+      - FILE_CONTAINER_DIRECTORY=/var/opt
+      - INPUT_FILE=/input/input-0.csv
+      - OUTPUT_FILE=/output/output-0.csv
     networks:
       - gabynet
-
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
   client_1:
     build:
       context: ./services/client
@@ -39,9 +42,14 @@ services:
       - AGENCY_ID=1
       - SERVER_HOST=server
       - SERVER_PORT=5678
+      - FILE_CONTAINER_DIRECTORY=/var/opt
+      - INPUT_FILE=/input/input-1.csv
+      - OUTPUT_FILE=/output/output-1.csv
     networks:
       - gabynet
-
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
   client_2:
     build:
       context: ./services/client
@@ -53,9 +61,14 @@ services:
       - AGENCY_ID=2
       - SERVER_HOST=server
       - SERVER_PORT=5678
+      - FILE_CONTAINER_DIRECTORY=/var/opt
+      - INPUT_FILE=/input/input-2.csv
+      - OUTPUT_FILE=/output/output-2.csv
     networks:
       - gabynet
-
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
   client_3:
     build:
       context: ./services/client
@@ -67,9 +80,14 @@ services:
       - AGENCY_ID=3
       - SERVER_HOST=server
       - SERVER_PORT=5678
+      - FILE_CONTAINER_DIRECTORY=/var/opt
+      - INPUT_FILE=/input/input-3.csv
+      - OUTPUT_FILE=/output/output-3.csv
     networks:
       - gabynet
-
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
   client_4:
     build:
       context: ./services/client
@@ -81,10 +99,35 @@ services:
       - AGENCY_ID=4
       - SERVER_HOST=server
       - SERVER_PORT=5678
+      - FILE_CONTAINER_DIRECTORY=/var/opt
+      - INPUT_FILE=/input/input-4.csv
+      - OUTPUT_FILE=/output/output-4.csv
     networks:
       - gabynet
-networks:
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
+  client_5:
+    build:
+      context: ./services/client
+      dockerfile: Dockerfile
+    container_name: client_5
+    depends_on:
+      - server
+    environment:
+      - AGENCY_ID=5
+      - SERVER_HOST=server
+      - SERVER_PORT=5678
+      - FILE_CONTAINER_DIRECTORY=/var/opt
+      - INPUT_FILE=/input/input-5.csv
+      - OUTPUT_FILE=/output/output-5.csv
+    networks:
+      - gabynet
+    volumes:
+      - ./input:/var/opt/input:ro
+      - ./output:/var/opt/output:rw
 
+networks:
   gabynet:
     driver: bridge
     name: gabynet
