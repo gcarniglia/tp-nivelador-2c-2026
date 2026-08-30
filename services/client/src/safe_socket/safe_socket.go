@@ -1,22 +1,42 @@
 package safe_socket
 
-import "io"
+import (
+	"errors"
+	"io"
+)
 
-//TODO: Complete with a short-read/short-write tolerant implementation
+func SendAll(socket io.Writer, data []byte) error {
+	totalBytesSent := 0
 
-func SendAll(socket io.Writer, bytes []byte) error {
-	_, err := socket.Write(bytes)
-	if err != nil {
-		return err
+	for totalBytesSent < len(data) {
+		sentBytes, err := socket.Write(data[totalBytesSent:])
+		if err != nil {
+			return err
+		}
+
+		totalBytesSent += sentBytes
 	}
+
 	return nil
 }
 
 func RecvAll(socket io.Reader, size int) ([]byte, error) {
-	buff := make([]byte, size)
-	n, err := socket.Read(buff)
-	if err != nil {
-		return nil, err
+	data := []byte{}
+
+	for len(data) < size {
+		buff := make([]byte, size-len(data))
+
+		receivedBytes, err := socket.Read(buff)
+		if err != nil {
+			return nil, err
+		}
+
+		if receivedBytes == 0 {
+			return nil, errors.New("socket closed before receiving all data")
+		}
+
+		data = append(data, buff[:receivedBytes]...)
 	}
-	return buff[:n], nil
+
+	return data, nil
 }
