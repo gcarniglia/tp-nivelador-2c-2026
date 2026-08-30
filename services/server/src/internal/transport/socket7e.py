@@ -18,14 +18,13 @@ class Socket7E:
     def __send(self, bytes: bytes) -> int:
         return safe_socket.send_all(self.__socket, bytes)
 
-    ''' Devuelve en bytes la longitud que tiene el payload del body'''
     def read_header(self) -> bytes:
         while True:
             byte = self.__recv(1)
             if byte == self.MAGIC_NUMBER:
                 break
         header_size_bytes = self.__recv(1)
-        header_fields = self.__recv(header_size_bytes[0])
+        header_fields = self.__recv(header_size_bytes[0] + 1)  # +1 para el agency_id
         return header_fields
 
     def read_payload(self, size: int) -> bytes:
