@@ -25,7 +25,7 @@ class Message7E:
 
 class Protocol7E:
 
-    QUANTITY_FIELDS_BET = len(fields(Bet))
+    QUANTITY_FIELDS_BET = len(fields(Bet)) - 1
 
     def __encode_header(self, size_payload: int, agency_id: int):
         bytes = b""
@@ -84,7 +84,7 @@ class Protocol7E:
         header = self.__encode_header(size_payload, message.agency_id)
         return header,payload
 
-    def __decode_bet_field_data(self, payload: bytes, ) -> tuple[Bet,int]:
+    def __decode_bet_field_data(self, payload: bytes, agency_id: int, index: int) -> tuple[Bet,int]:
         bet = Bet()
         for _ in range(self.QUANTITY_FIELDS_BET):
             if index >= len(payload):
@@ -116,7 +116,7 @@ class Protocol7E:
         mensaje.bets = []
         index = 1
         while index < len(payload):
-            bet,index = self.__decode_bet_field_data(payload)
+            bet,index = self.__decode_bet_field_data(payload,agency_id,index)
             mensaje.bets.append(bet)
         return mensaje
 

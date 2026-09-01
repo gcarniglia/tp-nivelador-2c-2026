@@ -24,12 +24,27 @@ func (s *Socket7E) recv(size int) ([]byte, error) {
 }
 
 // Envía todos los bytes especificados al socket
-func (s *Socket7E) send(bytes []byte) error {
-	return safe_socket.SendAll(s.socket, bytes)
+func (s *Socket7E) send(bytes []byte) (int, error) {
+	if err := safe_socket.SendAll(s.socket, bytes); err != nil {
+		return 0, err
+	}
+
+	return len(bytes), nil
 }
 
-// Devuelve los campos del header
-func (s *Socket7E) ReadHeader() ([]byte, error) {
+func (s *Socket7E) sendHeader(bytes []byte) (int, error) {
+	if _, err := s.send(MAGIC_NUMBER); err != nil {
+		return 0, err
+	}
+
+	return s.send(bytes)
+}
+
+func (s *Socket7E) sendPayload(bytes []byte) (int, error) {
+	return s.send(bytes)
+}
+
+func (s *Socket7E) ReadUntilHeaderFound() ([]byte, error) {
 	for {
 		b, err := s.recv(1)
 		if err != nil {
@@ -46,7 +61,7 @@ func (s *Socket7E) ReadHeader() ([]byte, error) {
 		return nil, err
 	}
 
-	headerFields, err := s.recv(int(headerSizeBytes[0]))
+	headerFields, err := s.recv(int(headerSizeBytes[0]) + 1) // +1 para el agency_id
 	if err != nil {
 		return nil, err
 	}
@@ -58,16 +73,18 @@ func (s *Socket7E) ReadPayload(size int) ([]byte, error) {
 	return s.recv(size)
 }
 
-func (s *Socket7E) SendHeader(bytes []byte) error {
-	if err := s.send(MAGIC_NUMBER); err != nil {
-		return err
+func (s *Socket7E) Send(header []byte, payload []byte) (int, error) {
+	h, err := s.sendHeader(header)
+	if err != nil {
+		return 0, err
 	}
 
-	return s.send(bytes)
-}
+	p, err := s.sendPayload(payload)
+	if err != nil {
+		return h, err
+	}
 
-func (s *Socket7E) SendPayload(bytes []byte) error {
-	return s.send(bytes)
+	return h + p, nil
 }
 
 // Cierra la conexión TCP con el cliente
