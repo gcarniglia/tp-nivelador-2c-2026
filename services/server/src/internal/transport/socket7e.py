@@ -18,7 +18,14 @@ class Socket7E:
     def __send(self, bytes: bytes) -> int:
         return safe_socket.send_all(self.__socket, bytes)
 
-    def read_header(self) -> bytes:
+    def __send_header(self, bytes: bytes) -> int:
+        self.__send(self.MAGIC_NUMBER)
+        return self.__send(bytes)
+
+    def __send_payload(self, bytes: bytes) -> int:
+        return self.__send(bytes)
+
+    def read_until_header_found(self) -> bytes:
         while True:
             byte = self.__recv(1)
             if byte == self.MAGIC_NUMBER:
@@ -29,13 +36,11 @@ class Socket7E:
 
     def read_payload(self, size: int) -> bytes:
         return self.__recv(size)
-    
-    def send_header(self, bytes: bytes) -> int:
-        self.__send(self.MAGIC_NUMBER)
-        return self.__send(bytes)
 
-    def send_payload(self, bytes: bytes) -> int:
-        return self.__send(bytes)
+    def send(self, header: bytes, payload: bytes) -> int:
+        h = self.__send_header(header)
+        p = self.__send_payload(payload)
+        return h + p
 
     ''' Cierra la conexión TCP con el cliente'''
     def close(self) -> None:

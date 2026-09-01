@@ -1,6 +1,7 @@
 
 from enum import Enum
 from dataclasses import dataclass, fields
+from services.server.src.internal.transport.socket7e import Socket7E
 from services.server.src_frozen.lottery.bet import Bet
 
 
@@ -20,13 +21,13 @@ class Message7E:
     
     type: MessageType
     bets: list[Bet]
+    agency_id: int
 
 class Protocol7E:
 
-    def parse_header(self):
-        pass
+    QUANTITY_FIELDS_BET = len(fields(Bet))
 
-    def build_header(self, size_payload: int, agency_id: int):
+    def __encode_header(self, size_payload: int, agency_id: int):
         bytes = b""
         size_payload_length = max(1, (size_payload.bit_length() + 7) // 8)
         size_payload_length_bytes = size_payload_length.to_bytes(1, byteorder='big')
@@ -41,10 +42,23 @@ class Protocol7E:
         bytes += size_payload_length_bytes + size_payload_bytes + agency_id_bytes
         return bytes
 
-    def parse_payload(self):
-        pass
+    def __encode_bet_field_data(self, field_name: str, data) -> tuple[bytes, bytes, bytes]:
+        if data is not None and field_name != "agency_id":
+            data_type = BetDataType[field_name.upper()].to_bytes(1, byteorder="big")
 
-    def build_payload(self, message_type: MessageType, bets: list[Bet]) -> list[bytes,int]:
+            if isinstance(data, str):
+                data_bytes = data.encode("utf-8")
+            elif isinstance(data, int):
+                data_length = max(1, (data.bit_length() + 7) // 8)
+                data_bytes = data.to_bytes(data_length, byteorder="big")
+            else:
+                raise TypeError(f"Tipo no soportado: {type(data)}")
+            
+        data_length_bytes = len(data_bytes).to_bytes(1, byteorder="big")
+        return data_type, data_length_bytes, data_bytes
+
+
+    def __encode_payload(self, message_type: MessageType, bets: list[Bet]) -> list[bytes,int]:
         bytes = b""
         type_payload = message_type.value.to_bytes(1, byteorder='big')
         bytes += type_payload 
@@ -55,36 +69,66 @@ class Protocol7E:
             # iterar sobre los datos de Bet distintos de null
             for field in fields(bet):
                 data = getattr(bet, field.name)
-                if data is not None and field.name != "agency_id":
-                    data_type = BetDataType[field.name.upper()].to_bytes(1, byteorder='big')
-                    data_length = max(1, (data.bit_length() + 7) // 8)
-                    data_length_bytes = data_length.to_bytes(1, byteorder='big')
-                    data_bytes = data.to_bytes(data_length, byteorder='big')
-                    bet_bytes += data_type + data_length_bytes + data_bytes
+                data_type,data_length_bytes,data_bytes = self.__encode_bet_field_data(field.name, data)
+                bet_bytes += data_type + data_length_bytes + data_bytes
+
             bytes += bet_bytes
 
         return [bytes,len(bytes)]
 
-    def decode_type(self):
-        pass
+    def __decode_header(self, header: bytes) -> tuple[int,int]:
+        return header[:-1],header[-1]
 
-    def decode_length(self):
-        pass
+    def encode(self, message: Message7E) -> tuple[bytes,bytes]:
+        payload, size_payload = self.__encode_payload(message.type, message.bets)
+        header = self.__encode_header(size_payload, message.agency_id)
+        return header,payload
 
-    def decode_value(self):
-        pass
+    def __decode_bet_field_data(self, payload: bytes, ) -> tuple[Bet,int]:
+        bet = Bet()
+        for _ in range(self.QUANTITY_FIELDS_BET):
+            if index >= len(payload):
+                break #Escenario no posible porque no hay problema de integridad de data
 
-    def encode_type(self):
-        pass
+            data_type = BetDataType(int.from_bytes(payload[index:index+1], byteorder='big'))
+            index += 1
+            data_length = int.from_bytes(payload[index:index+1], byteorder='big')
+            index += 1
+            data_bytes = payload[index:index+data_length]
+            index += data_length
 
-    def encode_length(self):
-        pass
+            if data_type == BetDataType.FIRST_NAME:
+                bet.first_name = data_bytes.decode("utf-8")
+            elif data_type == BetDataType.LAST_NAME:
+                bet.last_name = data_bytes.decode("utf-8")
+            elif data_type == BetDataType.DOCUMENT:
+                bet.document = int.from_bytes(data_bytes, byteorder='big')
+            elif data_type == BetDataType.BIRTHDATE:
+                bet.birthdate = int.from_bytes(data_bytes, byteorder='big')
+            elif data_type == BetDataType.NUMBER:
+                bet.number = int.from_bytes(data_bytes, byteorder='big')
+        return bet,index
+        
+    def __decode(self, payload: bytes, agency_id: int) -> Message7E:
+        mensaje = Message7E()
+        mensaje.agency_id = agency_id
+        mensaje.type = MessageType(int.from_bytes(payload[0:1], byteorder='big'))
+        mensaje.bets = []
+        index = 1
+        while index < len(payload):
+            bet,index = self.__decode_bet_field_data(payload)
+            mensaje.bets.append(bet)
+        return mensaje
 
-    def encode_value(self):
-        pass
+    def write_message(self, connection: Socket7E, message: Message7E):
+        header,payload = self.encode(message)
+        connection.send(header, payload)
 
-    def encode(self):
-        pass
+    def read_message(self, connection: Socket7E) -> Message7E:
+        header = connection.read_until_header_found()
 
-    def decode(self):
-        pass
+        size_payload,agency_id = self.__decode_header(header)
+        payload = connection.read_payload(size_payload)
+        message = self.__decode(payload, agency_id)
+        return message
+
